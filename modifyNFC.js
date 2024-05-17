@@ -43,11 +43,12 @@ nfc.on('reader', reader => {
           return;
         }
 
-        db.run(`UPDATE rfid SET rfid = ? WHERE utilisateur_id = ?`, [currentRfid, user.id], function(err) {
+        // Insérer une nouvelle entrée dans la table rfid
+        db.run(`INSERT INTO rfid (rfid, utilisateur_id, status) VALUES (?, ?, ?)`, [currentRfid, user.id, 'autorisé'], function(err) {
           if (err) {
-            console.error('Erreur lors de la mise à jour de la carte NFC :', err.message);
+            console.error('Erreur lors de la création de la nouvelle carte NFC :', err.message);
           } else {
-            console.log(`Carte NFC mise à jour pour l'utilisateur ${user.nom}`);
+            console.log(`Nouvelle carte NFC créée pour l'utilisateur ${user.nom}`);
           }
           rl.close();
         });
