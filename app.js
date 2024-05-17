@@ -72,22 +72,6 @@ app.get('/scans', async (req, res) => {
   }
 });
 
-// Configurer le port série pour le lecteur RFID
-const port = new SerialPort('/dev/tty.usbserial', { baudRate: 9600 });
-const parser = port.pipe(new Readline({ delimiter: '\r\n' }));
-
-// Écouter les données du lecteur RFID
-parser.on('data', async (data) => {
-  console.log(`Données RFID : ${data}`); // Afficher les données RFID dans la console
-  try {
-    const rfidEntry = new Rfid({ rfid: data, utilisateur: null }); // Créer une nouvelle entrée RFID sans utilisateur
-    await rfidEntry.save(); // Sauvegarder l'entrée dans la base de données
-    console.log('Entrée RFID enregistrée'); // Afficher un message de succès
-  } catch (error) {
-    console.error('Erreur lors de l\'enregistrement de l\'entrée RFID :', error); // Afficher un message d'erreur
-  }
-});
-
 // Démarrer le serveur sur le port 3000
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
