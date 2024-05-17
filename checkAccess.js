@@ -1,43 +1,48 @@
 // Importation des modules nécessaires
 const express = require('express');
-const mongoose = require('mongoose');
+const sqlite3 = require('sqlite3').verbose();
 const { NFC } = require('nfc-pcsc');
 
-// Connexion à MongoDB
-mongoose.connect('mongodb://localhost:27017/rfid');
+// Connexion à SQLite
+const db = new sqlite3.Database('./rfid.db', (err) => {
+  if (err) {
+    console.error('Erreur de connexion :', err.message);
+  } else {
+    console.log('Connecté à SQLite');
+    db.serialize(() => {
+      // Création des tables si elles n'existent pas
+      db.run(`
+        CREATE TABLE IF NOT EXISTS utilisateur (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          nom TEXT NOT NULL,
+          email TEXT NOT NULL UNIQUE,
+          acces TEXT NOT NULL
+        )
+      `);
 
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'Erreur de connexion :'));
-db.once('open', () => {
-  console.log('Connecté à MongoDB');
+      db.run(`
+        CREATE TABLE IF NOT EXISTS rfid (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          rfid TEXT NOT NULL UNIQUE,
+          utilisateur_id INTEGER,
+          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(utilisateur_id) REFERENCES utilisateur(id)
+        )
+      `);
+
+      db.run(`
+        CREATE TABLE IF NOT EXISTS log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          rfid TEXT NOT NULL,
+          utilisateur_id INTEGER,
+          accesAutorise BOOLEAN NOT NULL,
+          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(utilisateur_id) REFERENCES utilisateur(id)
+        )
+      `);
+    });
+  }
 });
-
-// Schéma pour les badges RFID
-const rfidSchema = new mongoose.Schema({
-  rfid: { type: String, required: true, unique: true },
-  utilisateur: { type: mongoose.Schema.Types.ObjectId, ref: 'Utilisateur' },
-  timestamp: { type: Date, default: Date.now }
-});
-
-// Schéma pour les utilisateurs
-const utilisateurSchema = new mongoose.Schema({
-  nom: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  acces: { type: String, required: true }
-});
-
-// Schéma pour les logs de passage
-const logSchema = new mongoose.Schema({
-  rfid: { type: String, required: true },
-  utilisateur: { type: mongoose.Schema.Types.ObjectId, ref: 'Utilisateur' },
-  accesAutorise: { type: Boolean, required: true },
-  timestamp: { type: Date, default: Date.now }
-});
-
-// Modèles pour les collections
-const Rfid = mongoose.model('Rfid', rfidSchema);
-const Utilisateur = mongoose.model('Utilisateur', utilisateurSchema);
-const Log = mongoose.model('Log', logSchema);
 
 // Initialiser NFC
 const nfc = new NFC();
@@ -45,43 +50,48 @@ const nfc = new NFC();
 nfc.on('reader', reader => {
     console.log(`${reader.reader.name} détecté`);
 
-    reader.on('card', async card => {
+    reader.on('card', card => {
         console.log(`Carte détectée :`, card);
         const rfid = card.uid;
         console.log(`UID : ${rfid}`);
 
-        try {
-            const rfidEntry = await Rfid.findOne({ rfid }).populate('utilisateur').exec();
+        db.get(`SELECT * FROM rfid WHERE rfid = ?`, [rfid], (err, rfidEntry) => {
+            if (err) {
+                return console.error('Erreur lors de la vérification de l\'accès :', err.message);
+            }
+
             if (!rfidEntry) {
                 console.log('RFID non trouvé');
                 return;
             }
 
-            const utilisateur = rfidEntry.utilisateur;
-            let accesAutorise = false;
+            db.get(`SELECT * FROM utilisateur WHERE id = ?`, [rfidEntry.utilisateur_id], (err, utilisateur) => {
+                if (err) {
+                    return console.error('Erreur lors de la vérification de l\'accès :', err.message);
+                }
 
-            // Logique de vérification d'accès
-            if (utilisateur.acces === 'admin' || utilisateur.acces === 'employe') {
-                accesAutorise = true;
-            }
+                let accesAutorise = false;
 
-            // Enregistrement du log
-            const logEntry = new Log({
-                rfid,
-                utilisateur: utilisateur._id,
-                accesAutorise
+                // Logique de vérification d'accès
+                if (utilisateur.acces === 'admin' || utilisateur.acces === 'employe') {
+                    accesAutorise = true;
+                }
+
+                // Enregistrement du log
+                db.run(`INSERT INTO log (rfid, utilisateur_id, accesAutorise) VALUES (?, ?, ?)`, [rfid, utilisateur.id, accesAutorise], (err) => {
+                    if (err) {
+                        return console.error('Erreur lors de l\'enregistrement du log :', err.message);
+                    }
+
+                    if (accesAutorise) {
+                        console.log('Accès autorisé');
+                        // Code pour ouvrir la porte
+                    } else {
+                        console.log('Accès refusé');
+                    }
+                });
             });
-            await logEntry.save();
-
-            if (accesAutorise) {
-                console.log('Accès autorisé');
-                // Code pour ouvrir la porte
-            } else {
-                console.log('Accès refusé');
-            }
-        } catch (error) {
-            console.error('Erreur lors de la vérification de l\'accès :', error);
-        }
+        });
     });
 
     reader.on('card.off', card => {
