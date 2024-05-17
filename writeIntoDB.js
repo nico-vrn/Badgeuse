@@ -10,38 +10,6 @@ const db = new sqlite3.Database('./rfid.db', (err) => {
     console.error('Erreur de connexion :', err.message);
   } else {
     console.log('Connecté à SQLite');
-    db.serialize(() => {
-      // Création des tables si elles n'existent pas
-      db.run(`
-        CREATE TABLE IF NOT EXISTS utilisateur (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          nom TEXT NOT NULL,
-          email TEXT NOT NULL UNIQUE,
-          acces TEXT NOT NULL
-        )
-      `);
-
-      db.run(`
-        CREATE TABLE IF NOT EXISTS rfid (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          rfid TEXT NOT NULL UNIQUE,
-          utilisateur_id INTEGER,
-          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(utilisateur_id) REFERENCES utilisateur(id)
-        )
-      `);
-
-      db.run(`
-        CREATE TABLE IF NOT EXISTS log (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          rfid TEXT NOT NULL,
-          utilisateur_id INTEGER,
-          accesAutorise BOOLEAN NOT NULL,
-          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(utilisateur_id) REFERENCES utilisateur(id)
-        )
-      `);
-    });
   }
 });
 
