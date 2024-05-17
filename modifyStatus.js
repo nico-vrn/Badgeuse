@@ -28,6 +28,7 @@ rl.question('UID de la carte NFC : ', (rfid) => {
         }
       }
       rl.close();
+      process.exit(0);
     });
   });
 });

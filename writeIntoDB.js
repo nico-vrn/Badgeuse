@@ -55,7 +55,8 @@ nfc.on('reader', reader => {
                   }
                   console.log(`Un nouvel enregistrement a été ajouté à la table rfid avec l'UID ${rfid}`);
                   //close process
-                    rl.close();
+                  rl.close();
+                  process.exit(0);
                 });
               });
             });

@@ -68,6 +68,8 @@ nfc.on('reader', reader => {
           } else {
             console.log('Accès refusé');
           }
+          rl.close();
+          process.exit(0);
         });
       });
     });

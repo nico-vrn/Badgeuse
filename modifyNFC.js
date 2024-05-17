@@ -51,6 +51,7 @@ nfc.on('reader', reader => {
             console.log(`Nouvelle carte NFC créée pour l'utilisateur ${user.nom}`);
           }
           rl.close();
+          process.exit(0);
         });
       });
     });
