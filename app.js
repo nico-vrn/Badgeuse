@@ -22,7 +22,12 @@ db.once('open', () => {
 const rfidSchema = new mongoose.Schema({
   rfid: { type: String, required: true, unique: true },
   utilisateur: { type: mongoose.Schema.Types.ObjectId, ref: 'Utilisateur' },
-  timestamp: { type: Date, default: Date.now }
+  timestamp: { type: Date, default: Date.now },
+  status: { 
+    type: String, 
+    enum: ['autorisé', 'révoqué', 'perdu'], 
+    default: 'autorisé' 
+  }
 });
 
 // schéma pour les utilisateurs

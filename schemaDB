@@ -1,9 +1,15 @@
-+---------------------------+        +-----------------------+
-|       Utilisateur         |        |         Rfid          |
-+---------------------------+        +-----------------------+
-| _id (ObjectId)            |<-------| _id (ObjectId)        |
-| nom (String)              |        | rfid (String)         |
-| email (String)            |        | utilisateur (ObjectId)|
-+---------------------------+        | timestamp (Date)      |
-                                     +-----------------------+
-add status rfid
+Utilisateurs Collection:
+------------------------
+| _id (ObjectID)       |
+| nom (String)         |
+| email (String)       |
+------------------------
+
+Badges RFID Collection:
+------------------------
+| _id (ObjectID)       |
+| rfid (String)        |
+| utilisateur (ObjectID)|
+| timestamp (Date)     |
+| status (String)      |
+------------------------
