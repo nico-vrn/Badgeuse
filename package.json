@@ -1,0 +1,22 @@
+{
+  "name": "badgeuse",
+  "version": "1.0.0",
+  "description": "Projet de cours de badgeuse",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nico-vrn/Badgeuse.git"
+  },
+  "author": "Nicolas Lefranc",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nico-vrn/Badgeuse/issues"
+  },
+  "homepage": "https://github.com/nico-vrn/Badgeuse#readme",
+  "dependencies": {
+    "nfc-pcsc": "^0.8.1"
+  }
+}
